@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Atlas • Country &amp; Capital Explorer</title>
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --card-bg: rgba(17, 24, 39, 0.72);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --card-border-glow: rgba(99, 102, 241, 0.35);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #38bdf8;
+            --accent-indigo: #6366f1;
+            --accent-purple: #a855f7;
+            --accent-amber: #f59e0b;
+            --capital-color: #38bdf8; /* Required custom capital font color */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            color: var(--text-primary);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Glowing Background Orbs */
+        .ambient-glow {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.6;
+            animation: pulse-glow 8s ease-in-out infinite alternate;
+        }
+
+        .orb-1 {
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.45), transparent 70%);
+            top: -10%;
+            left: 10%;
+        }
+
+        .orb-2 {
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.35), transparent 70%);
+            bottom: -15%;
+            right: 10%;
+            animation-delay: -4s;
+        }
+
+        .orb-3 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.3), transparent 70%);
+            top: 40%;
+            left: 60%;
+            animation-delay: -2s;
+        }
+
+        @keyframes pulse-glow {
+            0% { transform: scale(1) translate(0, 0); opacity: 0.5; }
+            50% { transform: scale(1.15) translate(20px, -20px); opacity: 0.75; }
+            100% { transform: scale(0.95) translate(-15px, 25px); opacity: 0.5; }
+        }
+
+        /* Subtle grid lines background overlay */
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Main Glassmorphic Container */
+        .app-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 780px;
+            background: var(--card-bg);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--card-border);
+            border-radius: 28px;
+            box-shadow: 
+                0 30px 80px -20px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            padding: 44px;
+            transition: border-color 0.3s ease;
+        }
+
+        .app-container:hover {
+            border-color: var(--card-border-glow);
+        }
+
+        /* Header section with badge */
+        .badge-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #818cf8;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        .pill-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #38bdf8;
+            box-shadow: 0 0 8px #38bdf8;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.7); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 34px;
+        }
+
+        .header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+            background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.98rem;
+            line-height: 1.5;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+
+
+        /* The Main Interactive Selection & Capital Display Row (PRINTED NEXT TO EACH OTHER) */
+        .interaction-stage {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.85), rgba(20, 29, 51, 0.85));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .panel-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .panel-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .panel-title .icon {
+            font-size: 0.9rem;
+        }
+
+        /* Custom Styled Select Dropdown (Native <select> inside wrapper) */
+        .select-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        select#countrySelect {
+            width: 100%;
+            padding: 16px 48px 16px 20px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            background-color: rgba(30, 41, 59, 0.85);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        select#countrySelect:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            background-color: rgba(30, 41, 59, 1);
+        }
+
+        select#countrySelect:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+        }
+
+        select#countrySelect option {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 12px;
+            font-size: 1rem;
+        }
+
+        .select-chevron {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #94a3b8;
+            transition: transform 0.2s ease;
+        }
+
+        /* Connecting Beam / Arrow placed next to the list */
+        .connector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+            color: #475569;
+        }
+
+        .connector-beam {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #38bdf8;
+            transition: all 0.3s ease;
+        }
+
+        .connector-beam svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .interaction-stage:hover .connector-beam {
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(56, 189, 248, 0.1);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+        }
+
+        .interaction-stage:hover .connector-beam svg {
+            transform: translateX(3px);
+        }
+
+        /* ========================================================
+           REQUIRED CSS: CAPITAL TEXT FONT CUSTOMIZATION
+           - Color: Vibrant luminous cyan / electric blue
+           - Bold: font-weight bold (800)
+           - Font size: 2rem (32px)
+           ======================================================== */
+        .capital-text {
+            color: var(--capital-color);   /* 1. Custom Font Color */
+            font-weight: bold;             /* 2. Bold Font */
+            font-size: 2rem;               /* 3. Custom Font Size */
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+            display: block;
+            text-shadow: 0 0 24px rgba(56, 189, 248, 0.35);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .capital-display-wrapper {
+            background: rgba(30, 41, 59, 0.55);
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 14px 20px;
+            min-height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .capital-display-wrapper.active {
+            border-color: rgba(56, 189, 248, 0.45);
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
+        }
+
+        .capital-text.placeholder {
+            color: #64748b;
+            font-weight: 500;
+            font-size: 1.05rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            text-shadow: none;
+            font-style: italic;
+        }
+
+        /* Additional details pill badge when selected */
+        .country-details-card {
+            margin-top: 24px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 20px 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.35s ease;
+            pointer-events: none;
+        }
+
+        .country-details-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .detail-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            color: #64748b;
+        }
+
+        .detail-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+
+
+        /* Animation class on text update */
+        .animate-reveal {
+            animation: text-reveal 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes text-reveal {
+            0% {
+                opacity: 0;
+                transform: translateY(8px) scale(0.96);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Responsive Layout Adjustments */
+        @media (max-width: 680px) {
+            .app-container {
+                padding: 28px 20px;
+                border-radius: 22px;
+            }
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            .interaction-stage {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 20px;
+            }
+            .connector {
+                padding: 8px 0;
+            }
+            .connector-beam svg {
+                transform: rotate(90deg);
+            }
+            .interaction-stage:hover .connector-beam svg {
+                transform: rotate(90deg) translateY(3px);
+            }
+            .capital-text {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient glowing lights -->
+    <div class="ambient-glow orb-1" aria-hidden="true"></div>
+    <div class="ambient-glow orb-2" aria-hidden="true"></div>
+    <div class="ambient-glow orb-3" aria-hidden="true"></div>
+    <div class="grid-overlay" aria-hidden="true"></div>
+
+    <main class="app-container">
+        <!-- Badge -->
+        <div class="badge-wrapper">
+            <span class="pill-badge">
+                <span class="pill-dot"></span>
+                Interactive Geographic Atlas
+            </span>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <h1>Country &amp; Capital Explorer</h1>
+            <p>Select any nation from the selection box below to instantly view its capital city beside the dropdown.</p>
+        </header>
+
+
+
+        <!-- MAIN INTERACTIVE SECTION: Selection Box with Capital Printed Next to it -->
+        <div class="interaction-stage">
+            <!-- Left: Country Selection Box -->
+            <div class="panel-box">
+                <label for="countrySelect" class="panel-title">
+                    <span class="icon">🌍</span> Country Selection
+                </label>
+                <div class="select-wrapper">
+                    <select id="countrySelect" onchange="handleCountryChange()">
+                        <option value="" disabled selected>-- Choose a Country --</option>
+                        <option value="India">🇮🇳 India</option>
+                        <option value="Japan">🇯🇵 Japan</option>
+                        <option value="France">🇫🇷 France</option>
+                        <option value="Canada">🇨🇦 Canada</option>
+                        <option value="Australia">🇦🇺 Australia</option>
+                    </select>
+                    <!-- Custom chevron icon -->
+                    <div class="select-chevron">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle: Connector beam linking the two elements -->
+            <div class="connector" aria-hidden="true">
+                <div class="connector-beam">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Right: Capital City printed next to the list -->
+            <div class="panel-box">
+                <span class="panel-title">
+                    <span class="icon">🏛️</span> Capital City
+                </span>
+                <div class="capital-display-wrapper" id="capitalWrapper">
+                    <span id="capitalDisplay" class="capital-text placeholder">Select country...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Extra Rich Geographic Insight Card -->
+        <div class="country-details-card" id="detailsCard">
+            <div class="detail-item">
+                <span class="detail-label">Continent</span>
+                <span class="detail-value" id="detailContinent">--</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Iconic Landmark</span>
+                <span class="detail-value" id="detailLandmark">--</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Currency</span>
+                <span class="detail-value" id="detailCurrency">--</span>
+            </div>
+        </div>
+
+
+    </main>
+
+    <script>
+        // Database of countries with capitals and metadata
+        const countryData = {
+            'India': {
+                capital: 'New Delhi',
+                flag: '🇮🇳',
+                continent: 'Asia',
+                landmark: 'Taj Mahal',
+                currency: 'Indian Rupee (₹)'
+            },
+            'Japan': {
+                capital: 'Tokyo',
+                flag: '🇯🇵',
+                continent: 'Asia',
+                landmark: 'Mount Fuji',
+                currency: 'Japanese Yen (¥)'
+            },
+            'France': {
+                capital: 'Paris',
+                flag: '🇫🇷',
+                continent: 'Europe',
+                landmark: 'Eiffel Tower',
+                currency: 'Euro (€)'
+            },
+            'Canada': {
+                capital: 'Ottawa',
+                flag: '🇨🇦',
+                continent: 'North America',
+                landmark: 'Niagara Falls',
+                currency: 'Canadian Dollar (C$)'
+            },
+            'Australia': {
+                capital: 'Canberra',
+                flag: '🇦🇺',
+                continent: 'Oceania',
+                landmark: 'Sydney Opera House',
+                currency: 'Australian Dollar (A$)'
+            }
+        };
+
+        // Subtle audio feedback using Web Audio API
+        function playChime() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start();
+                osc.stop(ctx.currentTime + 0.35);
+            } catch(e) {
+                // Audio might be blocked before user interaction, ignore safely
+            }
+        }
+
+        // Called when user changes the dropdown select box
+        function handleCountryChange() {
+            const selectElement = document.getElementById('countrySelect');
+            const selectedCountry = selectElement.value;
+            updateCapitalUI(selectedCountry);
+        }
+
+        // Central update logic
+        function updateCapitalUI(countryName) {
+            const capitalDisplay = document.getElementById('capitalDisplay');
+            const capitalWrapper = document.getElementById('capitalWrapper');
+            const detailsCard = document.getElementById('detailsCard');
+
+            if (countryData[countryName]) {
+                const info = countryData[countryName];
+
+                // Play subtle auditory feedback
+                playChime();
+
+                // Re-trigger animation
+                capitalDisplay.classList.remove('animate-reveal');
+                void capitalDisplay.offsetWidth; // Force reflow
+
+                // Update text and remove placeholder styling
+                capitalDisplay.textContent = info.capital;
+                capitalDisplay.classList.remove('placeholder');
+                capitalDisplay.classList.add('animate-reveal');
+                capitalWrapper.classList.add('active');
+
+                // Populate and reveal detailed geographic metadata
+                document.getElementById('detailContinent').innerHTML = `<span>🌐</span> ${info.continent}`;
+                document.getElementById('detailLandmark').innerHTML = `<span>🏛️</span> ${info.landmark}`;
+                document.getElementById('detailCurrency').innerHTML = `<span>🪙</span> ${info.currency}`;
+                detailsCard.classList.add('visible');
+            } else {
+                capitalDisplay.textContent = 'Select country...';
+                capitalDisplay.classList.add('placeholder');
+                capitalWrapper.classList.remove('active');
+                detailsCard.classList.remove('visible');
+            }
+        }
+    </script>
+
+</body>
+</html>
